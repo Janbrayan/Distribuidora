@@ -182,6 +182,11 @@ def eliminar_usuario(usuario_id):
 
     usuario = Usuario.query.get_or_404(usuario_id)
 
+    # Evitar que un usuario se elimine a sí mismo
+    if usuario.id == current_user.id:
+        flash("No puedes eliminar tu propia cuenta.", "danger")
+        return redirect(url_for('dashboard.usuarios'))
+
     # Verificar si el usuario tiene relaciones que impidan su eliminación
     if usuario.ventas:  # Por ejemplo, si hay un modelo relacionado como 'ventas'
         flash("No se puede eliminar este usuario. Consulta con el administrador.", "danger")
