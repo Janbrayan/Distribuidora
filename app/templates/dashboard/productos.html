@@ -34,7 +34,6 @@
     {% endif %}
 {% endwith %}
 
-
 <div class="card mt-3">
     <div class="card-body">
         <h5 class="card-title d-flex justify-content-between align-items-center">
@@ -76,52 +75,63 @@
                             <i class="bi bi-pencil"></i> Editar
                         </button>
                         <!-- Formulario para eliminar -->
-                        <form method="POST" action="{{ url_for('dashboard.eliminar_producto', producto_id=producto.id) }}" style="display:inline;">
+                        <form method="POST" action="{{ url_for('dashboard.eliminar_producto', producto_id=producto.id) }}" style="display:inline;" onsubmit="confirmarEliminacion(event, '{{ producto.nombre }}');">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="btn btn-sm btn-danger">
                                 <i class="bi bi-trash"></i> Eliminar
                             </button>
                         </form>
-                        {% else %}
-                        <!-- Si quieres, puedes mostrar un texto diciendo "Sin permisos", o dejarlo vacío -->
-                        <span class="text-muted">Sin permisos</span>
                         {% endif %}
                     </td>
                 </tr>
-
-                <!-- Modal para editar producto (SOLO admin) -->
                 {% if current_user.es_admin %}
                 <div class="modal fade" id="editarProductoModal{{ producto.id }}" tabindex="-1">
                     <div class="modal-dialog">
                         <div class="modal-content">
-                            <form method="POST" action="{{ url_for('dashboard.editar_producto', producto_id=producto.id) }}">
+                            <form method="POST" action="{{ url_for('dashboard.editar_producto', producto_id=producto.id) }}" onsubmit="confirmarActualizacion(event, '{{ producto.nombre }}');">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <div class="modal-header">
-                                    <h5 class="modal-title">Editar Producto</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    <h5 class="modal-title">
+                                        <i class="bi bi-pencil-square"></i> Editar Producto
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
                                 <div class="modal-body">
                                     <div class="mb-3">
-                                        <label for="nombre{{ producto.id }}" class="form-label">Nombre</label>
+                                        <label for="nombre{{ producto.id }}" class="form-label">
+                                            <i class="bi bi-box"></i> Nombre
+                                        </label>
                                         <input type="text" class="form-control" id="nombre{{ producto.id }}" name="nombre" value="{{ producto.nombre }}" required>
                                     </div>
                                     <div class="mb-3">
-                                        <label for="total_piezas{{ producto.id }}" class="form-label">Total Piezas</label>
+                                        <label for="total_piezas{{ producto.id }}" class="form-label">
+                                            <i class="bi bi-123"></i> Total Piezas
+                                        </label>
                                         <input type="number" class="form-control" id="total_piezas{{ producto.id }}" name="total_piezas" value="{{ producto.total_piezas }}" min="1" required>
                                     </div>
                                     <div class="mb-3">
-                                        <label for="stock{{ producto.id }}" class="form-label">Stock</label>
+                                        <label for="stock{{ producto.id }}" class="form-label">
+                                            <i class="bi bi-stack"></i> Stock
+                                        </label>
                                         <input type="number" class="form-control" id="stock{{ producto.id }}" name="stock" value="{{ producto.stock }}" min="0" max="{{ producto.total_piezas }}" required>
-                                        <small class="form-text text-muted">El stock no debe exceder el total de piezas.</small>
+                                        <small class="form-text text-muted">
+                                            <i class="bi bi-info-circle"></i> El stock no debe exceder el total de piezas.
+                                        </small>
                                     </div>
                                     <div class="mb-3">
-                                        <label for="precio{{ producto.id }}" class="form-label">Precio</label>
+                                        <label for="precio{{ producto.id }}" class="form-label">
+                                            <i class="bi bi-currency-dollar"></i> Precio
+                                        </label>
                                         <input type="number" step="0.01" class="form-control" id="precio{{ producto.id }}" name="precio" value="{{ producto.precio }}" min="0" required>
                                     </div>
                                 </div>
                                 <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                        <i class="bi bi-x-circle"></i> Cancelar
+                                    </button>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-save"></i> Guardar Cambios
+                                    </button>
                                 </div>
                             </form>
                         </div>
@@ -143,33 +153,111 @@
 <div class="modal fade" id="crearProductoModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form method="POST" action="{{ url_for('dashboard.agregar_producto') }}">
+            <form method="POST" action="{{ url_for('dashboard.agregar_producto') }}" onsubmit="confirmarAgregar(event);">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="modal-header">
-                    <h5 class="modal-title">Agregar Producto</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title">
+                        <i class="bi bi-plus-circle"></i> Agregar Producto
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
                         {{ form.nombre.label(class="form-label") }}
-                        {{ form.nombre(class="form-control") }}
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-box"></i></span>
+                            {{ form.nombre(class="form-control") }}
+                        </div>
                     </div>
                     <div class="mb-3">
                         {{ form.total_piezas.label(class="form-label") }}
-                        {{ form.total_piezas(class="form-control") }}
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-123"></i></span>
+                            {{ form.total_piezas(class="form-control") }}
+                        </div>
                     </div>
                     <div class="mb-3">
                         {{ form.precio.label(class="form-label") }}
-                        {{ form.precio(class="form-control") }}
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-currency-dollar"></i></span>
+                            {{ form.precio(class="form-control") }}
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-success">Agregar Producto</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-circle"></i> Agregar Producto
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 {% endif %}
+
+
+<!-- SweetAlert2 Script -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    // Confirmación para agregar
+    function confirmarAgregar(event) {
+        event.preventDefault();
+        Swal.fire({
+            title: '¿Agregar Producto?',
+            text: '¿Estás seguro de que deseas agregar este producto?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Sí, agregar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                event.target.submit();
+            }
+        });
+    }
+
+    // Confirmación para actualizar
+    function confirmarActualizacion(event, nombreProducto) {
+        event.preventDefault();
+        Swal.fire({
+            title: '¿Actualizar Producto?',
+            text: `¿Estás seguro de que deseas actualizar el producto "${nombreProducto}"?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#007bff',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Sí, actualizar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                event.target.submit();
+            }
+        });
+    }
+
+    // Confirmación para eliminar
+    function confirmarEliminacion(event, nombreProducto) {
+        event.preventDefault();
+        Swal.fire({
+            title: '¿Eliminar Producto?',
+            text: `¿Estás seguro de que deseas eliminar el producto "${nombreProducto}"? Esta acción no se puede deshacer.`,
+            icon: 'error',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                event.target.submit();
+            }
+        });
+    }
+</script>
+
 {% endblock %}

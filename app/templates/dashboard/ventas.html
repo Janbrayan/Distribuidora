@@ -75,15 +75,19 @@
 <div class="modal fade" id="registrarVentaModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form method="POST" action="{{ url_for('dashboard.agregar_venta') }}">
+            <form method="POST" action="{{ url_for('dashboard.agregar_venta') }}" onsubmit="confirmarVenta(event);">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="modal-header">
-                    <h5 class="modal-title">Registrar Venta</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title">
+                        <i class="bi bi-cart-plus"></i> Registrar Venta
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="producto" class="form-label">Producto</label>
+                        <label for="producto" class="form-label">
+                            <i class="bi bi-box"></i> Producto
+                        </label>
                         <select class="form-select" id="producto" name="producto_id" onchange="calcularTotal()" required>
                             <option value="" selected disabled>Seleccione un producto</option>
                             {% for producto in productos %}
@@ -96,32 +100,45 @@
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label for="precio" class="form-label">Precio Unitario</label>
+                        <label for="precio" class="form-label">
+                            <i class="bi bi-currency-dollar"></i> Precio Unitario
+                        </label>
                         <input type="text" class="form-control" id="precio" readonly>
                     </div>
                     <div class="mb-3">
-                        <label for="cantidad" class="form-label">Cantidad</label>
+                        <label for="cantidad" class="form-label">
+                            <i class="bi bi-stack"></i> Cantidad
+                        </label>
                         <input type="number" class="form-control" id="cantidad" name="cantidad"
                                min="1" oninput="calcularTotal()" required>
                     </div>
                     <div class="mb-3">
-                        <label for="total" class="form-label">Total</label>
+                        <label for="total" class="form-label">
+                            <i class="bi bi-calculator"></i> Total
+                        </label>
                         <input type="text" class="form-control" id="total" readonly>
                     </div>
                     <div class="mb-3">
-                        <label for="totalLetras" class="form-label">Total en Letras</label>
+                        <label for="totalLetras" class="form-label">
+                            <i class="bi bi-chat-text"></i> Total en Letras
+                        </label>
                         <textarea class="form-control" id="totalLetras" rows="2" readonly></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-success">Registrar Venta</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-circle"></i> Registrar Venta
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     function calcularTotal() {
         const productoSelect = document.getElementById('producto');
@@ -151,8 +168,48 @@
     }
 
     function numeroALetras(num) {
-        // Implementación simplificada para convertir números a letras.
-        return `${num} pesos`; // Ejemplo muy básico.
+        return `${num} pesos`; // Implementación básica
+    }
+
+    function confirmarVenta(event) {
+        event.preventDefault(); // Detenemos el envío automático del formulario
+
+        const productoSelect = document.getElementById('producto');
+        const cantidadInput = document.getElementById('cantidad');
+        const totalInput = document.getElementById('total');
+
+        const productoSeleccionado = productoSelect.options[productoSelect.selectedIndex]?.textContent.trim() || '';
+        const cantidad = cantidadInput.value || 0;
+        const total = totalInput.value || '';
+
+        if (!productoSeleccionado || cantidad <= 0 || !total) {
+            Swal.fire({
+                title: 'Error',
+                text: 'Por favor, complete todos los campos correctamente.',
+                icon: 'error',
+                confirmButtonText: 'Entendido'
+            });
+            return;
+        }
+
+        Swal.fire({
+            title: '¿Registrar Venta?',
+            html: `
+                <strong>Producto:</strong> ${productoSeleccionado}<br>
+                <strong>Cantidad:</strong> ${cantidad}<br>
+                <strong>Total:</strong> ${total}
+            `,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Sí, registrar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                event.target.submit(); // Enviar el formulario manualmente
+            }
+        });
     }
 </script>
 {% endblock %}

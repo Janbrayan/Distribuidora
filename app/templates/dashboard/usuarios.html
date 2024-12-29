@@ -38,8 +38,6 @@
     <div class="card-body">
         <h5 class="card-title d-flex justify-content-between align-items-center">
             <span>Lista de Usuarios</span>
-            {# Solo se muestra botón "Crear Usuario" si es admin (aunque, en teoría,
-               si estás aquí ya eres admin, pero lo dejamos por consistencia) #}
             {% if current_user.es_admin %}
             <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#crearUsuarioModal">
                 <i class="bi bi-person-plus"></i> Crear Usuario
@@ -69,15 +67,12 @@
                         </span>
                     </td>
                     <td>
-                        {# Si no deseas que el trabajador (si llegara aquí) pueda editar, 
-                           encierra esto en if current_user.es_admin 
-                           aunque ya lo controlas en la ruta. #}
                         <button class="btn btn-sm btn-warning" data-bs-toggle="modal"
                                 data-bs-target="#editarUsuarioModal{{ usuario.id }}">
                             <i class="bi bi-pencil"></i> Editar
                         </button>
                         <form method="POST" action="{{ url_for('dashboard.eliminar_usuario', usuario_id=usuario.id) }}"
-                              style="display:inline;">
+                              style="display:inline;" onsubmit="confirmarEliminacionUsuario(event, '{{ usuario.nombre }}');">
                             {{ form.hidden_tag() }}
                             <button type="submit" class="btn btn-sm btn-danger">
                                 <i class="bi bi-trash"></i> Eliminar
@@ -86,49 +81,62 @@
                     </td>
                 </tr>
 
-                <!-- Modal para editar usuario -->
                 <div class="modal fade" id="editarUsuarioModal{{ usuario.id }}" tabindex="-1">
                     <div class="modal-dialog">
                         <div class="modal-content">
-                            <form method="POST" action="{{ url_for('dashboard.editar_usuario', usuario_id=usuario.id) }}">
+                            <form method="POST" action="{{ url_for('dashboard.editar_usuario', usuario_id=usuario.id) }}"
+                                  onsubmit="confirmarActualizacionUsuario(event, '{{ usuario.nombre }}');">
                                 {{ form.hidden_tag() }}
                                 <div class="modal-header">
-                                    <h5 class="modal-title">Editar Usuario</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    <h5 class="modal-title">
+                                        <i class="bi bi-pencil-square"></i> Editar Usuario
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
                                 <div class="modal-body">
                                     <div class="mb-3">
                                         {{ form.nombre.label(class="form-label") }}
-                                        <input type="text" class="form-control" name="nombre"
-                                               value="{{ usuario.nombre }}" required>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                            <input type="text" class="form-control" name="nombre" value="{{ usuario.nombre }}" required>
+                                        </div>
                                     </div>
                                     <div class="mb-3">
                                         {{ form.email.label(class="form-label") }}
-                                        <input type="email" class="form-control" name="email"
-                                               value="{{ usuario.email }}" required>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                            <input type="email" class="form-control" name="email" value="{{ usuario.email }}" required>
+                                        </div>
                                     </div>
                                     <div class="mb-3">
-                                        <label for="password" class="form-label">Nueva Contraseña (Opcional)</label>
-                                        <input type="password" class="form-control" name="password"
-                                               placeholder="Ingrese una nueva contraseña si desea cambiarla">
+                                        <label for="password" class="form-label">
+                                            <i class="bi bi-lock"></i> Nueva Contraseña (Opcional)
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-key"></i></span>
+                                            <input type="password" class="form-control" name="password" placeholder="Ingrese una nueva contraseña si desea cambiarla">
+                                        </div>
                                     </div>
                                     <div class="form-check">
-                                        <input type="checkbox" class="form-check-input" id="es_admin_{{ usuario.id }}"
-                                               name="es_admin" {% if usuario.es_admin %}checked{% endif %}>
-                                        <label class="form-check-label"
-                                               for="es_admin_{{ usuario.id }}">Es administrador</label>
+                                        <input type="checkbox" class="form-check-input" id="es_admin_{{ usuario.id }}" name="es_admin" {% if usuario.es_admin %}checked{% endif %}>
+                                        <label class="form-check-label" for="es_admin_{{ usuario.id }}">
+                                            <i class="bi bi-shield-lock"></i> Es administrador
+                                        </label>
                                     </div>
                                 </div>
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                        Cancelar
+                                        <i class="bi bi-x-circle"></i> Cancelar
                                     </button>
-                                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-save"></i> Guardar Cambios
+                                    </button>
                                 </div>
                             </form>
                         </div>
                     </div>
                 </div>
+                
                 {% else %}
                 <tr>
                     <td colspan="5" class="text-center">No hay usuarios registrados</td>
@@ -139,29 +147,40 @@
     </div>
 </div>
 
-<!-- Modal para crear usuario -->
 {% if current_user.es_admin %}
 <div class="modal fade" id="crearUsuarioModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form method="POST" action="{{ url_for('dashboard.agregar_usuario') }}">
+            <form method="POST" action="{{ url_for('dashboard.agregar_usuario') }}"
+                  onsubmit="confirmarAgregarUsuario(event);">
                 {{ form.hidden_tag() }}
                 <div class="modal-header">
-                    <h5 class="modal-title">Crear Usuario</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title">
+                        <i class="bi bi-person-plus"></i> Crear Usuario
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
                         {{ form.nombre.label(class="form-label") }}
-                        {{ form.nombre(class="form-control") }}
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                            {{ form.nombre(class="form-control") }}
+                        </div>
                     </div>
                     <div class="mb-3">
                         {{ form.email.label(class="form-label") }}
-                        {{ form.email(class="form-control") }}
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                            {{ form.email(class="form-control") }}
+                        </div>
                     </div>
                     <div class="mb-3">
                         {{ form.password.label(class="form-label") }}
-                        {{ form.password(class="form-control") }}
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                            {{ form.password(class="form-control") }}
+                        </div>
                     </div>
                     <div class="form-check">
                         {{ form.es_admin(class="form-check-input") }}
@@ -169,12 +188,79 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-success">Crear Usuario</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-circle"></i> Crear Usuario
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 {% endif %}
+
+
+<!-- SweetAlert2 Script -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    // Confirmación para agregar usuario
+    function confirmarAgregarUsuario(event) {
+        event.preventDefault();
+        Swal.fire({
+            title: '¿Crear Usuario?',
+            text: '¿Estás seguro de que deseas crear este usuario?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Sí, crear',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                event.target.submit();
+            }
+        });
+    }
+
+    // Confirmación para actualizar usuario
+    function confirmarActualizacionUsuario(event, nombreUsuario) {
+        event.preventDefault();
+        Swal.fire({
+            title: '¿Actualizar Usuario?',
+            text: `¿Estás seguro de que deseas actualizar el usuario "${nombreUsuario}"?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#007bff',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Sí, actualizar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                event.target.submit();
+            }
+        });
+    }
+
+    // Confirmación para eliminar usuario
+    function confirmarEliminacionUsuario(event, nombreUsuario) {
+        event.preventDefault();
+        Swal.fire({
+            title: '¿Eliminar Usuario?',
+            text: `¿Estás seguro de que deseas eliminar el usuario "${nombreUsuario}"? Esta acción no se puede deshacer.`,
+            icon: 'error',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                event.target.submit();
+            }
+        });
+    }
+</script>
+
 {% endblock %}
