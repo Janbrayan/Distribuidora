@@ -11,6 +11,10 @@ from sqlalchemy import func
 from datetime import datetime, timedelta
 import os
 import pandas as pd
+from flask import current_app
+import tempfile  # Asegúrate de incluir esta línea
+
+
 
 @dashboard.route('/')
 @login_required
@@ -443,17 +447,16 @@ def exportar_reporte():
         return redirect(url_for('dashboard.reportes'))
 
     try:
-        escritorio = os.path.join(os.path.expanduser("~"), "Desktop")
-        directorio = os.path.join(escritorio, "reportes")
-        if not os.path.exists(directorio):
-            os.makedirs(directorio)
-
-        archivo = os.path.join(directorio, "reporte_ventas.xlsx")
+        # Crear un archivo temporal en lugar de usar el escritorio del usuario
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
+            archivo = tmp.name
 
         filtro = request.args.get("filtro")
         usuario_id = request.args.get("usuario_id")
         producto_id = request.args.get("producto_id")
         fecha = request.args.get("fecha")
+        mes = request.args.get("mes")
+        año = request.args.get("año")
 
         query = Venta.query
         if filtro == "dia" and fecha:
@@ -462,10 +465,12 @@ def exportar_reporte():
             inicio_semana = datetime.strptime(fecha, "%Y-%m-%d")
             fin_semana = inicio_semana + timedelta(days=6)
             query = query.filter(Venta.fecha.between(inicio_semana, fin_semana))
-        elif filtro == "mes" and fecha:
-            query = query.filter(func.strftime("%Y-%m", Venta.fecha) == fecha[:7])
-        elif filtro == "año" and fecha:
-            query = query.filter(func.strftime("%Y", Venta.fecha) == fecha[:4])
+        elif filtro == "mes" and mes and año:
+            # Asegurarse de que el mes tenga dos dígitos
+            mes_formateado = mes.zfill(2)
+            query = query.filter(func.strftime("%Y-%m", Venta.fecha) == f"{año}-{mes_formateado}")
+        elif filtro == "año" and año:
+            query = query.filter(func.strftime("%Y", Venta.fecha) == año)
         elif filtro == "usuario" and usuario_id:
             query = query.filter(Venta.usuario_id == usuario_id)
         elif filtro == "producto" and producto_id:
@@ -522,33 +527,37 @@ def exportar_reporte():
                 "bg_color": "#FFD700"
             })
 
+            # Escribir los encabezados con formato
             for col_num, value in enumerate(df.columns.values):
                 worksheet.write(0, col_num, value, header_format)
 
+            # Ajustar el ancho de las columnas
             for i, col in enumerate(df.columns):
-                worksheet.set_column(i, i, max(len(col), 15))
+                max_length = max(df[col].astype(str).map(len).max(), len(col)) + 2
+                worksheet.set_column(i, i, max_length)
 
+            # Aplicar formato a las celdas
             for row_num in range(1, len(df) + 1):
                 worksheet.set_row(row_num, None, cell_format)
 
-            worksheet.write(len(df) + 2, 0, "Total de Ventas:", header_format)
-            worksheet.write(len(df) + 2, 1, total_ventas, total_format)
+            # Escribir el total de ventas dos filas después del último dato
+            total_row = len(df) + 2
+            worksheet.write(total_row, 0, "Total de Ventas:", header_format)
+            worksheet.write(total_row, 1, total_ventas, total_format)
 
         session['last_report_path'] = archivo
 
-        session['reportes_alertas'] = [{
-            "category": "success",
-            "message": f"Reporte generado exitosamente en: {archivo}"
-        }]
-
-        return redirect(url_for("dashboard.reportes", descargar="1"))
+        # Redirige a la página de reportes con el parámetro 'descargado=1'
+        return redirect(url_for("dashboard.reportes", descargado=1))
 
     except Exception as e:
+        current_app.logger.error(f"Error al generar el reporte: {str(e)}")
         session['reportes_alertas'] = [{
             "category": "danger",
             "message": f"Error al generar el reporte: {str(e)}"
         }]
         return redirect(url_for("dashboard.reportes"))
+
 
 @dashboard.route('/descargar_archivo')
 @login_required
@@ -558,8 +567,13 @@ def descargar_archivo():
         return redirect(url_for('dashboard.reportes'))
 
     archivo = session.get('last_report_path')
+    filtro = request.args.get("filtro", "reporte_general")  # Valor predeterminado
+
     if not archivo or not os.path.exists(archivo):
         flash("No se encontró el archivo de reporte.", "warning")
         return redirect(url_for("dashboard.reportes"))
 
-    return send_file(archivo, as_attachment=True)
+    # Asignar nombre dinámico según el filtro
+    nombre_descarga = f"{filtro}_ventas.xlsx"
+
+    return send_file(archivo, as_attachment=True, download_name=nombre_descarga)

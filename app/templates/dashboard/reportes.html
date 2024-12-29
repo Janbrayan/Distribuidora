@@ -3,7 +3,8 @@
 
 {% block content %}
 <h1 class="text-center mb-4">Generar Reportes</h1>
-<!-- Alertas (tanto flash como reportes_alertas) -->
+
+<!-- Contenedor de alertas -->
 <div id="alert-container">
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
@@ -25,18 +26,71 @@
         {% endfor %}
     {% endif %}
 </div>
+
 <script>
-    document.querySelectorAll('.close-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const alert = this.parentElement;
-            alert.style.transform = 'translateX(100%)';
-            alert.style.opacity = '0';
-            setTimeout(() => alert.remove(), 500);
+    // Función para obtener parámetros de la URL
+    function getURLParameter(name) {
+        return new URLSearchParams(window.location.search).get(name);
+    }
+
+    // Función para mostrar una alerta personalizada
+    function mostrarAlerta(category, message) {
+        const alertContainer = document.getElementById('alert-container');
+        const alertDiv = document.createElement('div');
+        alertDiv.classList.add('custom-alert', `alert-${category}`);
+        alertDiv.innerHTML = `
+            <span>${message}</span>
+            <button class="close-btn">&times;</button>
+        `;
+        alertContainer.appendChild(alertDiv);
+
+        // Agregar evento para cerrar la alerta
+        alertDiv.querySelector('.close-btn').addEventListener('click', () => {
+            cerrarAlerta(alertDiv);
+        });
+    }
+
+    // Función para cerrar una alerta con animación
+    function cerrarAlerta(alertDiv) {
+        alertDiv.style.transform = 'translateX(100%)';
+        alertDiv.style.opacity = '0';
+        setTimeout(() => alertDiv.remove(), 500);
+    }
+
+    // Mostrar alerta de descarga exitosa y descargar el archivo
+    if (getURLParameter('descargado') === '1') {
+        mostrarAlerta('success', 'El archivo se ha descargado exitosamente.');
+
+        // Iniciar la descarga del archivo después de que la página haya cargado completamente
+        window.onload = function() {
+            // Crear un enlace temporal para descargar el archivo
+            const link = document.createElement('a');
+            link.href = "{{ url_for('dashboard.descargar_archivo') }}";
+            // No establecer el atributo download aquí, ya que el servidor ya lo maneja
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            // Opcional: Remover el parámetro de la URL para evitar múltiples descargas al recargar
+            const url = new URL(window.location);
+            url.searchParams.delete('descargado');
+            window.history.replaceState({}, document.title, url.toString());
+        };
+    }
+
+    // Asignar eventos a todos los botones de cierre existentes
+    document.addEventListener('DOMContentLoaded', () => {
+        const closeButtons = document.querySelectorAll('.close-btn');
+        closeButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const alertDiv = btn.parentElement;
+                cerrarAlerta(alertDiv);
+            });
         });
     });
 </script>
 
-
+<!-- Formulario de filtros de reportes -->
 <div class="card">
     <div class="card-header">
         <h2>Filtros de Reportes</h2>
@@ -44,13 +98,9 @@
     <div class="card-body">
         <form id="reporteForm" method="GET" action="{{ url_for('dashboard.exportar_reporte') }}">
             <div class="row mb-3">
-
                 <!-- Filtro principal -->
                 <div class="col-md-3">
                     <label for="filtro" class="form-label">Filtro</label>
-                    <!-- 
-                        required en el select, y una opción placeholder (deshabilitada/seleccionada).
-                    -->
                     <select name="filtro" id="filtro" class="form-select" onchange="actualizarFormulario()" required>
                         <option value="" disabled selected>Seleccione un filtro...</option>
                         <option value="dia">Día</option>
@@ -84,7 +134,7 @@
                     </select>
                 </div>
 
-                <!-- Campo para Fecha (aplica a "dia" y "semana") -->
+                <!-- Campo para Fecha -->
                 <div class="col-md-3" id="fechaField" style="display: none;">
                     <label for="fecha" class="form-label">Fecha</label>
                     <input type="date" name="fecha" id="fecha" class="form-control">
@@ -112,7 +162,7 @@
                     </select>
                 </div>
 
-                <!-- Botón para enviar (descargar reporte) -->
+                <!-- Botón para enviar -->
                 <div class="col-md-3">
                     <label for="submit" class="form-label d-block">&nbsp;</label>
                     <button type="submit" class="btn btn-success w-100">
@@ -127,63 +177,55 @@
 <script>
     function actualizarFormulario() {
         const filtro = document.getElementById('filtro').value;
-        
+
         // Contenedores
         const usuarioField = document.getElementById('usuarioField');
         const productoField = document.getElementById('productoField');
-        const fechaField   = document.getElementById('fechaField');
-        const mesField     = document.getElementById('mesField');
-        const añoField     = document.getElementById('añoField');
+        const fechaField = document.getElementById('fechaField');
+        const mesField = document.getElementById('mesField');
+        const añoField = document.getElementById('añoField');
 
         // Inputs
-        const usuarioInput  = document.getElementById('usuario_id');
+        const usuarioInput = document.getElementById('usuario_id');
         const productoInput = document.getElementById('producto_id');
-        const fechaInput    = document.getElementById('fecha');
-        const mesInput      = document.getElementById('mes');
-        const añoInput      = document.getElementById('año');
+        const fechaInput = document.getElementById('fecha');
+        const mesInput = document.getElementById('mes');
+        const añoInput = document.getElementById('año');
 
-        // 1) Oculta todos los campos
+        // Ocultar todos los campos
         usuarioField.style.display = 'none';
         productoField.style.display = 'none';
-        fechaField.style.display    = 'none';
-        mesField.style.display      = 'none';
-        añoField.style.display      = 'none';
+        fechaField.style.display = 'none';
+        mesField.style.display = 'none';
+        añoField.style.display = 'none';
 
-        // 2) Quita el required de todos los inputs
+        // Quitar el atributo "required" de todos los inputs
         usuarioInput.removeAttribute('required');
         productoInput.removeAttribute('required');
         fechaInput.removeAttribute('required');
         mesInput.removeAttribute('required');
         añoInput.removeAttribute('required');
 
-        // 3) Si el usuario eligió un filtro (no ""), 
-        //    muestra y requiere el campo correspondiente
+        // Mostrar el campo correspondiente según el filtro seleccionado
         if (filtro === 'usuario') {
             usuarioField.style.display = 'block';
             usuarioInput.setAttribute('required', 'required');
-        } 
-        else if (filtro === 'producto') {
+        } else if (filtro === 'producto') {
             productoField.style.display = 'block';
             productoInput.setAttribute('required', 'required');
-        } 
-        else if (filtro === 'mes') {
+        } else if (filtro === 'mes') {
             mesField.style.display = 'block';
             mesInput.setAttribute('required', 'required');
-        } 
-        else if (filtro === 'año') {
+        } else if (filtro === 'año') {
             añoField.style.display = 'block';
             añoInput.setAttribute('required', 'required');
-        } 
-        else if (filtro === 'dia' || filtro === 'semana') {
-            // Día/semana => el mismo campo fecha
+        } else if (filtro === 'dia' || filtro === 'semana') {
             fechaField.style.display = 'block';
             fechaInput.setAttribute('required', 'required');
         }
-        // Si filtro === "", no mostramos nada, 
-        // pues el select ya es "required" y obliga a cambiar.
     }
 
-    // Llamamos a la función apenas cargue la página
+    // Inicializar el formulario al cargar la página
     window.addEventListener('DOMContentLoaded', (event) => {
         actualizarFormulario();
     });
