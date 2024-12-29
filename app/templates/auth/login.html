@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Distribuidora J&R</title>
+    <!-- Fuente Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <!-- (Opcional) SweetAlert2 para alertas si deseas -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/futuristic.css') }}">
+</head>
+<body>
+    <div class="login-container">
+        <!-- Branding: miradistribuidora J&R -->
+        <h1>Distribuidora J&R</h1>
+
+        <h2>BIENVENIDO</h2>
+        <p>Por favor, inicia sesión para continuar</p>
+
+        <form id="loginForm" method="POST" action="{{ url_for('auth.login') }}">
+            {{ form.hidden_tag() }}
+            <input type="email" name="email" placeholder="Correo Electrónico" value="{{ form.email.data or '' }}" required>
+            <input type="password" name="password" placeholder="Contraseña" required>
+            <button type="submit">Iniciar Sesión</button>
+        </form>
+
+    </div>
+
+    <!-- Ejemplo de contenedor de alertas (opcional, si usas flashes sin SweetAlert) -->
+    <div id="alert-container"></div>
+
+    <!-- Ejemplo de script para procesar alertas flash con tu estilo (opcional) -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <script>
+        const alertContainer = document.getElementById('alert-container');
+        const messages = {{ messages|tojson }};
+        messages.forEach(([category, message]) => {
+            const alertDiv = document.createElement('div');
+            alertDiv.classList.add('custom-alert');
+            if (category === 'success') {
+                alertDiv.classList.add('alert-success');
+            } else if (category === 'danger') {
+                alertDiv.classList.add('alert-danger');
+            } else if (category === 'warning') {
+                alertDiv.classList.add('alert-warning');
+            }
+            alertDiv.innerHTML = `
+                <span>${message}</span>
+                <button class="close-btn">&times;</button>
+            `;
+            alertContainer.appendChild(alertDiv);
+
+            const closeBtn = alertDiv.querySelector('.close-btn');
+            closeBtn.addEventListener('click', () => {
+                alertDiv.style.transform = 'translateX(100%)';
+                alertDiv.style.opacity = '0';
+                setTimeout(() => {
+                    alertDiv.remove();
+                }, 500);
+            });
+        });
+    </script>
+    {% endif %}
+    {% endwith %}
+</body>
+</html>

@@ -1,0 +1,43 @@
+/* Barra lateral */
+.sidebar {
+    min-width: 250px;
+    max-width: 250px;
+    background-color: #212529;
+    color: white;
+    transition: all 0.3s ease;
+    position: fixed;
+    top: 60px; /* Alinear debajo del encabezado */
+    left: 0;
+    height: calc(100vh - 60px); /* Ajustar la altura excluyendo el encabezado */
+    z-index: 1000;
+}
+
+.sidebar.collapsed {
+    margin-left: -250px;
+}
+
+/* Encabezado fijo */
+header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: #f8f9fa;
+    z-index: 1100;
+    padding: 10px 20px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    height: 60px; /* Altura consistente */
+}
+
+/* Contenido principal */
+.content {
+    margin-left: 250px;
+    margin-top: 60px; /* Alinear debajo del encabezado */
+    transition: margin-left 0.3s ease;
+    padding: 20px;
+    width: 100%;
+}
+
+.content.expanded {
+    margin-left: 0;
+}

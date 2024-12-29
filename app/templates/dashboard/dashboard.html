@@ -1,0 +1,140 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Título distinto según el rol -->
+{% if current_user.es_admin %}
+    <h1 class="text-center mb-4">Dashboard Administrador</h1>
+{% else %}
+    <h1 class="text-center mb-4">Dashboard Trabajador</h1>
+{% endif %}
+
+<!-- Sección de tarjetas / estadísticas -->
+<div class="row text-center mb-4">
+    <!-- Solo admin ve "Total Usuarios" -->
+    {% if current_user.es_admin %}
+    <div class="col-md-3">
+        <a href="{{ url_for('dashboard.usuarios') }}" class="text-decoration-none">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5><i class="fas fa-users me-2"></i> Total Usuarios</h5>
+                    <h2>{{ total_usuarios }}</h2>
+                </div>
+            </div>
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Total Productos (ambos pueden verlo) -->
+    <div class="col-md-3">
+        <a href="{{ url_for('dashboard.productos') }}" class="text-decoration-none">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5><i class="fas fa-boxes me-2"></i> Total Productos</h5>
+                    <h2>{{ total_productos }}</h2>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Total Ventas (ambos, pero en backend filtras por usuario si no es admin) -->
+    <div class="col-md-3">
+        <a href="{{ url_for('dashboard.ventas') }}" class="text-decoration-none">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5><i class="fas fa-chart-line me-2"></i> Total Ventas</h5>
+                    <h2>{{ total_ventas }}</h2>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Ingresos Totales (ambos). 
+         En backend, para el trabajador, calculas solo sus ingresos. 
+         Para el admin, lo global. -->
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <h5><i class="fas fa-dollar-sign me-2"></i> Ingresos Totales</h5>
+                <h2>${{ ingresos_totales | round(2) }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Productos con stock crítico (ambos). 
+     En backend, devuelves la lista real o una vacía si no aplica. -->
+<div class="card mb-4">
+    <div class="card-header bg-danger text-white">Productos con Stock Crítico</div>
+    <div class="card-body">
+        {% if stock_critico %}
+            <ul>
+                {% for producto in stock_critico %}
+                    <li>{{ producto.nombre }} (Stock: {{ producto.stock }})</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No hay productos con stock crítico.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Gráfica de Ventas (ambos). 
+     En backend, el admin genera datos globales, 
+     el trabajador sus datos. -->
+<div class="card">
+    <div class="card-header">
+        Ventas por Periodo
+        <form method="GET" action="{{ url_for('dashboard.index') }}" class="d-inline float-end">
+            <select name="filtro" onchange="this.form.submit()" 
+                    class="form-select form-select-sm w-auto d-inline">
+                <option value="dia" {% if filtro == 'dia' %}selected{% endif %}>Día</option>
+                <option value="semana" {% if filtro == 'semana' %}selected{% endif %}>Semana</option>
+                <option value="mes" {% if filtro == 'mes' %}selected{% endif %}>Mes</option>
+                <option value="año" {% if filtro == 'año' %}selected{% endif %}>Año</option>
+            </select>
+        </form>
+    </div>
+    <div class="card-body">
+        <canvas id="ventasChart"></canvas>
+    </div>
+</div>
+
+<!-- Script para la gráfica (ambos). 
+     "ventas_por_periodo" vendrá filtrado en backend según sea admin o user. -->
+<script>
+    const ventasPorPeriodo = {{ ventas_por_periodo | tojson }};
+    const labels = ventasPorPeriodo.map(v => v.fecha);
+    const data = ventasPorPeriodo.map(v => parseFloat(v.total));
+
+    const ctx = document.getElementById('ventasChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Ventas ($)',
+                data: data,
+                backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: true },
+                tooltip: {
+                    callbacks: {
+                        label: (ctx) => `$${ctx.raw.toFixed(2)}`
+                    }
+                }
+            },
+            scales: {
+                x: { title: { display: true, text: 'Fecha' } },
+                y: { title: { display: true, text: 'Ingresos ($)' } }
+            }
+        }
+    });
+</script>
+{% endblock %}

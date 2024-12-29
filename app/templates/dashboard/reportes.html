@@ -1,0 +1,177 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% block title %}Reportes{% endblock %}
+
+{% block content %}
+<h1 class="text-center mb-4">Generar Reportes</h1>
+
+<!-- Alertas (tanto flash como reportes_alertas) -->
+{% if get_flashed_messages() %}
+    {% for message in get_flashed_messages(with_categories=true) %}
+        <div class="alert alert-{{ message[0] }} alert-dismissible fade show" role="alert">
+            {{ message[1] }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+{% if reportes_alertas %}
+    {% for alerta in reportes_alertas %}
+        <div class="alert alert-{{ alerta.category }} alert-dismissible fade show" role="alert">
+            {{ alerta.message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div class="card">
+    <div class="card-header">
+        <h2>Filtros de Reportes</h2>
+    </div>
+    <div class="card-body">
+        <form id="reporteForm" method="GET" action="{{ url_for('dashboard.exportar_reporte') }}">
+            <div class="row mb-3">
+
+                <!-- Filtro principal -->
+                <div class="col-md-3">
+                    <label for="filtro" class="form-label">Filtro</label>
+                    <!-- 
+                        required en el select, y una opción placeholder (deshabilitada/seleccionada).
+                    -->
+                    <select name="filtro" id="filtro" class="form-select" onchange="actualizarFormulario()" required>
+                        <option value="" disabled selected>Seleccione un filtro...</option>
+                        <option value="dia">Día</option>
+                        <option value="semana">Semana</option>
+                        <option value="mes">Mes</option>
+                        <option value="año">Año</option>
+                        <option value="usuario">Por Usuario</option>
+                        <option value="producto">Por Producto</option>
+                    </select>
+                </div>
+
+                <!-- Campo para Usuario -->
+                <div class="col-md-3" id="usuarioField" style="display: none;">
+                    <label for="usuario_id" class="form-label">Seleccionar Usuario</label>
+                    <select name="usuario_id" id="usuario_id" class="form-select">
+                        <option value="" selected disabled>Seleccione un Usuario</option>
+                        {% for usuario in usuarios %}
+                        <option value="{{ usuario.id }}">{{ usuario.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Campo para Producto -->
+                <div class="col-md-3" id="productoField" style="display: none;">
+                    <label for="producto_id" class="form-label">Seleccionar Producto</label>
+                    <select name="producto_id" id="producto_id" class="form-select">
+                        <option value="" selected disabled>Seleccione un Producto</option>
+                        {% for producto in productos %}
+                        <option value="{{ producto.id }}">{{ producto.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Campo para Fecha (aplica a "dia" y "semana") -->
+                <div class="col-md-3" id="fechaField" style="display: none;">
+                    <label for="fecha" class="form-label">Fecha</label>
+                    <input type="date" name="fecha" id="fecha" class="form-control">
+                </div>
+
+                <!-- Campo para Mes -->
+                <div class="col-md-3" id="mesField" style="display: none;">
+                    <label for="mes" class="form-label">Seleccionar Mes</label>
+                    <select name="mes" id="mes" class="form-select">
+                        <option value="" selected disabled>Seleccione un Mes</option>
+                        {% for mes in meses_disponibles %}
+                        <option value="{{ mes }}">{{ mes }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Campo para Año -->
+                <div class="col-md-3" id="añoField" style="display: none;">
+                    <label for="año" class="form-label">Seleccionar Año</label>
+                    <select name="año" id="año" class="form-select">
+                        <option value="" selected disabled>Seleccione un Año</option>
+                        {% for año in años_disponibles %}
+                        <option value="{{ año }}">{{ año }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Botón para enviar (descargar reporte) -->
+                <div class="col-md-3">
+                    <label for="submit" class="form-label d-block">&nbsp;</label>
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="fas fa-file-excel"></i> Descargar Reporte
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function actualizarFormulario() {
+        const filtro = document.getElementById('filtro').value;
+        
+        // Contenedores
+        const usuarioField = document.getElementById('usuarioField');
+        const productoField = document.getElementById('productoField');
+        const fechaField   = document.getElementById('fechaField');
+        const mesField     = document.getElementById('mesField');
+        const añoField     = document.getElementById('añoField');
+
+        // Inputs
+        const usuarioInput  = document.getElementById('usuario_id');
+        const productoInput = document.getElementById('producto_id');
+        const fechaInput    = document.getElementById('fecha');
+        const mesInput      = document.getElementById('mes');
+        const añoInput      = document.getElementById('año');
+
+        // 1) Oculta todos los campos
+        usuarioField.style.display = 'none';
+        productoField.style.display = 'none';
+        fechaField.style.display    = 'none';
+        mesField.style.display      = 'none';
+        añoField.style.display      = 'none';
+
+        // 2) Quita el required de todos los inputs
+        usuarioInput.removeAttribute('required');
+        productoInput.removeAttribute('required');
+        fechaInput.removeAttribute('required');
+        mesInput.removeAttribute('required');
+        añoInput.removeAttribute('required');
+
+        // 3) Si el usuario eligió un filtro (no ""), 
+        //    muestra y requiere el campo correspondiente
+        if (filtro === 'usuario') {
+            usuarioField.style.display = 'block';
+            usuarioInput.setAttribute('required', 'required');
+        } 
+        else if (filtro === 'producto') {
+            productoField.style.display = 'block';
+            productoInput.setAttribute('required', 'required');
+        } 
+        else if (filtro === 'mes') {
+            mesField.style.display = 'block';
+            mesInput.setAttribute('required', 'required');
+        } 
+        else if (filtro === 'año') {
+            añoField.style.display = 'block';
+            añoInput.setAttribute('required', 'required');
+        } 
+        else if (filtro === 'dia' || filtro === 'semana') {
+            // Día/semana => el mismo campo fecha
+            fechaField.style.display = 'block';
+            fechaInput.setAttribute('required', 'required');
+        }
+        // Si filtro === "", no mostramos nada, 
+        // pues el select ya es "required" y obliga a cambiar.
+    }
+
+    // Llamamos a la función apenas cargue la página
+    window.addEventListener('DOMContentLoaded', (event) => {
+        actualizarFormulario();
+    });
+</script>
+{% endblock %}

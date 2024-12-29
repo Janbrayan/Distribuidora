@@ -1,0 +1,146 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% block title %}Gestión de Ventas{% endblock %}
+
+{% block content %}
+<h2 class="fw-bold">Gestión de Ventas</h2>
+
+<style>
+    .modal-dialog {
+        margin-top: 10vh; /* Ajusta el margen superior del modal */
+    }
+</style>
+
+<!-- Alertas específicas para Ventas -->
+{% if ventas_alertas %}
+    {% for alerta in ventas_alertas %}
+        <div class="alert alert-{{ alerta.category }} alert-dismissible fade show" role="alert">
+            {{ alerta.message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div class="card mt-3">
+    <div class="card-body">
+        <h5 class="card-title d-flex justify-content-between align-items-center">
+            <span>Lista de Ventas</span>
+            {# Botón para registrar una venta (visible a ambos roles) #}
+            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#registrarVentaModal">
+                <i class="bi bi-cart-plus"></i> Registrar Venta
+            </button>
+        </h5>
+
+        <table class="table table-striped table-hover mt-3">
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Total</th>
+                    <th>Usuario</th>
+                    <th>Fecha</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for venta in ventas %}
+                <tr>
+                    <td>{{ venta.producto.nombre }}</td>
+                    <td>{{ venta.cantidad }}</td>
+                    <td>$ {{ venta.total | round(2) }}</td>
+                    <td>{{ venta.usuario.nombre }}</td>
+                    <td>{{ venta.fecha.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center">No hay ventas registradas</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal para registrar venta -->
+<div class="modal fade" id="registrarVentaModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('dashboard.agregar_venta') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">Registrar Venta</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="producto" class="form-label">Producto</label>
+                        <select class="form-select" id="producto" name="producto_id" onchange="calcularTotal()" required>
+                            <option value="" selected disabled>Seleccione un producto</option>
+                            {% for producto in productos %}
+                            <option value="{{ producto.id }}" 
+                                    data-precio="{{ producto.precio }}" 
+                                    data-stock="{{ producto.stock }}">
+                                {{ producto.nombre }} (Stock: {{ producto.stock }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="precio" class="form-label">Precio Unitario</label>
+                        <input type="text" class="form-control" id="precio" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="cantidad" class="form-label">Cantidad</label>
+                        <input type="number" class="form-control" id="cantidad" name="cantidad"
+                               min="1" oninput="calcularTotal()" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="total" class="form-label">Total</label>
+                        <input type="text" class="form-control" id="total" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="totalLetras" class="form-label">Total en Letras</label>
+                        <textarea class="form-control" id="totalLetras" rows="2" readonly></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Registrar Venta</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function calcularTotal() {
+        const productoSelect = document.getElementById('producto');
+        const precioInput = document.getElementById('precio');
+        const cantidadInput = document.getElementById('cantidad');
+        const totalInput = document.getElementById('total');
+        const totalLetrasInput = document.getElementById('totalLetras');
+
+        const productoSeleccionado = productoSelect.options[productoSelect.selectedIndex];
+        const precio = productoSeleccionado ? parseFloat(productoSeleccionado.getAttribute('data-precio')) : 0;
+        const cantidad = parseInt(cantidadInput.value) || 0;
+
+        if (precio) {
+            precioInput.value = `$${precio.toFixed(2)}`;
+        } else {
+            precioInput.value = '';
+        }
+
+        if (precio && cantidad > 0) {
+            const total = precio * cantidad;
+            totalInput.value = `$${total.toFixed(2)}`;
+            totalLetrasInput.value = numeroALetras(total);
+        } else {
+            totalInput.value = '';
+            totalLetrasInput.value = '';
+        }
+    }
+
+    function numeroALetras(num) {
+        // Implementación simplificada para convertir números a letras.
+        return `${num} pesos`; // Ejemplo muy básico.
+    }
+</script>
+{% endblock %}
