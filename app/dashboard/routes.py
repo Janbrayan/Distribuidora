@@ -173,14 +173,26 @@ def editar_usuario(usuario_id):
 @login_required
 def eliminar_usuario(usuario_id):
     if not current_user.es_admin:
+        flash("No tienes permiso para eliminar usuarios.", "danger")
         return redirect(url_for('dashboard.index'))
 
     usuario = Usuario.query.get_or_404(usuario_id)
-    db.session.delete(usuario)
-    db.session.commit()
 
-    flash('Usuario eliminado correctamente.', 'success')
+    # Verificar si el usuario tiene relaciones que impidan su eliminación
+    if usuario.ventas:  # Por ejemplo, si hay un modelo relacionado como 'ventas'
+        flash("No se puede eliminar este usuario. Consulta con el administrador.", "danger")
+        return redirect(url_for('dashboard.usuarios'))
+
+    try:
+        db.session.delete(usuario)
+        db.session.commit()
+        flash('Usuario eliminado correctamente.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash("Ocurrió un error al intentar eliminar el usuario. Inténtalo de nuevo.", "danger")
+
     return redirect(url_for('dashboard.usuarios'))
+
 
 
 # --- Rutas para Productos ---
@@ -265,11 +277,22 @@ def eliminar_producto(producto_id):
         return redirect(url_for('dashboard.productos'))
 
     producto = Producto.query.get_or_404(producto_id)
-    db.session.delete(producto)
-    db.session.commit()
 
-    flash('Producto eliminado correctamente.', 'success')
+    # Verificar si el producto tiene ventas asociadas
+    if producto.ventas:
+        flash("No se puede eliminar este producto. Consulta con el administrador.", "danger")
+        return redirect(url_for('dashboard.productos'))
+
+    try:
+        db.session.delete(producto)
+        db.session.commit()
+        flash('Producto eliminado correctamente.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash("Ocurrió un error al intentar eliminar el producto. Inténtalo de nuevo.", "danger")
+    
     return redirect(url_for('dashboard.productos'))
+
 
 
 # --- Rutas para Ventas ---

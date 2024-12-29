@@ -13,14 +13,27 @@
 <!-- Alertas para acciones (usando get_flashed_messages) -->
 {% with messages = get_flashed_messages(with_categories=True) %}
     {% if messages %}
+    <div id="alert-container">
         {% for category, message in messages %}
-        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div class="custom-alert alert-{{ category }}">
+            <span>{{ message }}</span>
+            <button class="close-btn">&times;</button>
         </div>
         {% endfor %}
+    </div>
+    <script>
+        document.querySelectorAll('.close-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const alert = this.parentElement;
+                alert.style.transform = 'translateX(100%)';
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 500);
+            });
+        });
+    </script>
     {% endif %}
 {% endwith %}
+
 
 <div class="card mt-3">
     <div class="card-body">

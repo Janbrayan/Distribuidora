@@ -11,7 +11,6 @@
     <!-- Estilo personalizado -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 </head>
 <body>
     <div class="d-flex">
@@ -42,18 +41,14 @@
                     </li>
                     {% endif %}
 
-                    <!-- Productos:
-                         Si quieres que el trabajador también pueda verlos, 
-                         quita o ajusta el if de admin. 
-                         Aquí, por ejemplo, lo mostramos a ambos:
-                    -->
+                    <!-- Productos -->
                     <li class="nav-item">
                         <a href="{{ url_for('dashboard.productos') }}" class="nav-link text-white">
                             <i class="fas fa-boxes me-2"></i> Productos
                         </a>
                     </li>
 
-                    <!-- Ventas: ambos (admin ve todas, trabajador ve solo las suyas) -->
+                    <!-- Ventas -->
                     <li class="nav-item">
                         <a href="{{ url_for('dashboard.ventas') }}" class="nav-link text-white">
                             <i class="fas fa-chart-line me-2"></i> Ventas
@@ -88,6 +83,30 @@
                     <i class="fas fa-bars"></i>
                 </button>
             </header>
+
+            <!-- Contenedor de alertas -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div id="alert-container">
+                {% for category, message in messages %}
+                <div class="custom-alert alert-{{ category }}">
+                    <span>{{ message }}</span>
+                    <button class="close-btn">&times;</button>
+                </div>
+                {% endfor %}
+            </div>
+            <script>
+                document.querySelectorAll('.close-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const alert = this.parentElement;
+                        alert.style.transform = 'translateX(100%)';
+                        alert.style.opacity = '0';
+                        setTimeout(() => alert.remove(), 500);
+                    });
+                });
+            </script>
+            {% endif %}
+            {% endwith %}
 
             <!-- Contenedor para el contenido de cada vista -->
             <div class="main-content p-4">

@@ -41,3 +41,69 @@ header {
 .content.expanded {
     margin-left: 0;
 }
+
+/* Contenedor de alertas */
+#alert-container {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    z-index: 1050;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Alerta personalizada */
+.custom-alert {
+    background-color: #1e272e;
+    color: #ffffff;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 16px;
+    animation: slide-in 0.5s ease-out;
+    transition: all 0.5s ease;
+}
+
+/* Colores según categoría */
+.alert-success {
+    background-color: #2ecc71;
+}
+.alert-danger {
+    background-color: #e74c3c;
+}
+.alert-warning {
+    background-color: #f39c12;
+}
+
+/* Botón de cierre */
+.close-btn {
+    background: none;
+    border: none;
+    color: #ffffff;
+    font-size: 20px;
+    cursor: pointer;
+    line-height: 1;
+    margin-left: 10px;
+    transition: transform 0.3s ease;
+}
+
+.close-btn:hover {
+    transform: scale(1.2);
+}
+
+/* Animaciones */
+@keyframes slide-in {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+/* === FIN del CSS proporcionado === */

@@ -12,12 +12,24 @@
 
 <!-- Alertas específicas para Ventas -->
 {% if ventas_alertas %}
+<div id="alert-container">
     {% for alerta in ventas_alertas %}
-        <div class="alert alert-{{ alerta.category }} alert-dismissible fade show" role="alert">
-            {{ alerta.message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
+    <div class="custom-alert alert-{{ alerta.category }}">
+        <span>{{ alerta.message }}</span>
+        <button class="close-btn">&times;</button>
+    </div>
     {% endfor %}
+</div>
+<script>
+    document.querySelectorAll('.close-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const alert = this.parentElement;
+            alert.style.transform = 'translateX(100%)';
+            alert.style.opacity = '0';
+            setTimeout(() => alert.remove(), 500);
+        });
+    });
+</script>
 {% endif %}
 
 <div class="card mt-3">

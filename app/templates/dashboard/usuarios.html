@@ -10,16 +10,28 @@
     }
 </style>
 
-<!-- Alertas para acciones (crear, editar, eliminar) -->
-{% with messages = get_flashed_messages(with_categories=True) %}
-    {% if messages %}
-        {% for category, message in messages %}
-        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        {% endfor %}
-    {% endif %}
+<!-- Alertas con el estilo futurista -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div id="alert-container">
+    {% for category, message in messages %}
+    <div class="custom-alert alert-{{ category }}">
+        <span>{{ message }}</span>
+        <button class="close-btn">&times;</button>
+    </div>
+    {% endfor %}
+</div>
+<script>
+    document.querySelectorAll('.close-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const alert = this.parentElement;
+            alert.style.transform = 'translateX(100%)';
+            alert.style.opacity = '0';
+            setTimeout(() => alert.remove(), 500);
+        });
+    });
+</script>
+{% endif %}
 {% endwith %}
 
 <div class="card mt-3">

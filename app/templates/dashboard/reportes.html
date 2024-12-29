@@ -3,25 +3,39 @@
 
 {% block content %}
 <h1 class="text-center mb-4">Generar Reportes</h1>
-
 <!-- Alertas (tanto flash como reportes_alertas) -->
-{% if get_flashed_messages() %}
-    {% for message in get_flashed_messages(with_categories=true) %}
-        <div class="alert alert-{{ message[0] }} alert-dismissible fade show" role="alert">
-            {{ message[1] }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+<div id="alert-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+        <div class="custom-alert alert-{{ category }}">
+            <span>{{ message }}</span>
+            <button class="close-btn">&times;</button>
         </div>
-    {% endfor %}
-{% endif %}
+        {% endfor %}
+    {% endif %}
+    {% endwith %}
 
-{% if reportes_alertas %}
-    {% for alerta in reportes_alertas %}
-        <div class="alert alert-{{ alerta.category }} alert-dismissible fade show" role="alert">
-            {{ alerta.message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    {% if reportes_alertas %}
+        {% for alerta in reportes_alertas %}
+        <div class="custom-alert alert-{{ alerta.category }}">
+            <span>{{ alerta.message }}</span>
+            <button class="close-btn">&times;</button>
         </div>
-    {% endfor %}
-{% endif %}
+        {% endfor %}
+    {% endif %}
+</div>
+<script>
+    document.querySelectorAll('.close-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const alert = this.parentElement;
+            alert.style.transform = 'translateX(100%)';
+            alert.style.opacity = '0';
+            setTimeout(() => alert.remove(), 500);
+        });
+    });
+</script>
+
 
 <div class="card">
     <div class="card-header">
